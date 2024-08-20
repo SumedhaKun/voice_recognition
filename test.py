@@ -19,7 +19,6 @@ def search(vector):
     limit=10,  # number of returned entities
     output_fields=["name"],  # specifies fields to be returned
     )
-
     return res
 
 
