@@ -28,7 +28,7 @@ diarize_segments = diarize_model("dir/diri.wav")
 
 result = []
     
-for segment, _, speaker in diarize_segments.itertracks(yield_label=True): # Use itertracks to iterate over segments
+for segment, _, speaker in diarize_segments.itertracks(yield_label=True):
     print(segment)
     result.append({
         "start": segment.start,
@@ -52,10 +52,7 @@ for matrix in matrices:
     print("initial: ")
     print(matrix.shape)
     flat=matrix.flatten()[0:390]
-    print(flat)
     res=test.search(flat)
-    print(res)
-    # print(res[0][-1])
     speakers.append(res[-1][-1])
 for k in range(len(speakers)):
     result=model.transcribe(whisperx.load_audio("output"+str(k)+".wav"))
