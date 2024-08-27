@@ -8,11 +8,11 @@ def hann_window(length):
     return 0.5 * (1 - np.cos(2 * np.pi * np.arange(length) / (length - 1))) 
 
 
-def process_files(files):
-    vectors=[]
-    for filename in files:
-        vectors.append(process_file(filename))       
-    return vectors
+# def process_files(files):
+#     vectors=[]
+#     for filename in files:
+#         vectors.append(process_file(filename))       
+#     return vectors
 
 def process_file(file):
     fs, audio_samples = scipy.io.wavfile.read(file+".wav")
