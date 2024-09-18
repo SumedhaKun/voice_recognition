@@ -17,7 +17,7 @@ collection = database["voices"]
 record.record_audio("test1")
 file="test/test1.wav"
 
-model = whisperx.load_model('base',device="cpu",compute_type='float32')
+model = whisperx.load_model('base',device="cuda",compute_type='float32')
 TOKEN=os.getenv("MODEL_TOKEN")
 audio = whisperx.load_audio(file)
 
@@ -59,10 +59,12 @@ for matrix in matrices:
     print(matrix.shape)
     res=test.search(matrix)
     speakers.append(res)
+# Print results
 for k in range(len(speakers)):
     result=model.transcribe(whisperx.load_audio("output"+str(k)+".wav"))
     print(speakers[k]+": "+result["segments"][0]["text"])
 
+# Retrieve Feedback and add to database
 feedback=input("Was this correct? (Y/N) ")
 if feedback=="Y":
     for i in range(len(matrices)):
