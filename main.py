@@ -4,6 +4,8 @@ from pyannote.audio import Pipeline
 from pydub import AudioSegment
 import process
 import os
+from collections import Counter
+
 from dotenv import load_dotenv
 load_dotenv()
 import test
@@ -14,13 +16,15 @@ mongodb_client = MongoClient(URI)
 database = mongodb_client["VoiceRec"]
 collection = database["voices"]
 
-record.record_audio("test1")
-file="test/test1.wav"
+# records audio and stores in file 'test.wav'
+#record.record_audio("test")
+file="test2.wav"
 
-model = whisperx.load_model('base',device="cuda",compute_type='float32')
+model = whisperx.load_model('base',device="cpu",compute_type='float32')
 TOKEN=os.getenv("MODEL_TOKEN")
 audio = whisperx.load_audio(file)
 
+# transcribes audio
 result = model.transcribe(audio, batch_size=16)
 seg=result["segments"]
 
@@ -29,60 +33,61 @@ result = whisperx.align(result["segments"], model_a, metadata, audio, "cpu", ret
 
 
 diarize_model=Pipeline.from_pretrained('pyannote/speaker-diarization-3.1',use_auth_token=TOKEN)
-
+# diarize the audio file
 diarize_segments = diarize_model(file)
 
 result = []
     
 for segment, _, speaker in diarize_segments.itertracks(yield_label=True):
-    print(segment)
     result.append({
         "start": segment.start,
         "end": segment.end,
         "speaker": speaker
     })
 
+# combine clips with same voice identifier if adjacent
+res_stack=[]
+for item in result:
+    if not res_stack:
+        res_stack.append(item)
+        continue
+    if item["speaker"]==res_stack[-1]["speaker"]:
+        last=res_stack.pop()
+        last["end"]=item["end"]
+        res_stack.append(last)
+    else:
+        res_stack.append(item)
+
 audio = AudioSegment.from_file(file)
 i=0
-files=[]
-for item in result:
-    segment = audio[item["start"]*1000:item["end"]*1000]
-    segment.export("output"+str(i)+".wav", format="wav")
-    files.append("output"+str(i))
-    i+=1
+new_files=[]
+# Stores 5s clips of all diarized pieces
+for item in res_stack:
+    segment = audio[item["start"]*1000:item["end"]*1000+1]
+    segment.export("output.wav", format="wav")
+    clips=record.clip_recordings("output",i)
+    if clips:
+        new_files.append(clips)
+    i+=len(clips)
+
+speaker_res=[]
 matrices=[]
-for file in files:
-    matrices.append(process.process_file(file))
+for i in range(len(new_files)):
+    speaker=[]
+    transcription=[]
+    for j in range(len(new_files[i])):
+        matrix=process.process_file(new_files[i][j])
+        speaker.append(test.search(matrix))
+        t=model.transcribe(whisperx.load_audio(new_files[i][j]))["segments"][0]["text"]
+        transcription.append(t)
+    counter=Counter(speaker)
+    spkr=counter.most_common(1)[0][0]
+    speaker_res.append(spkr)
+    print(spkr+":"+''.join(transcription))
 
-speakers=[]
-for matrix in matrices:
-    print(matrix.shape)
-    res=test.search(matrix)
-    speakers.append(res)
-# Print results
-for k in range(len(speakers)):
-    result=model.transcribe(whisperx.load_audio("output"+str(k)+".wav"))
-    print(speakers[k]+": "+result["segments"][0]["text"])
 
-# Retrieve Feedback and add to database
-feedback=input("Was this correct? (Y/N) ")
-if feedback=="Y":
-    for i in range(len(matrices)):
-        obj={"matrix":matrices[i].tolist(), "name":speakers[i]}
-        collection.insert_one(obj)
-if feedback=="N":
-    wrongs=input("Which ones are wrong? (0-index, comma spaces) ")
-    wrongs=wrongs.split(",")
-    for idx in wrongs:
-        name=input("Who is correct owner for "+idx+"? ")
-        idx=int(idx)
-        obj={"matrix":matrices[idx].tolist(), "name":name}
-        print(obj)
-        collection.insert_one(obj)
-    for i in range(len(matrices)):
-        if str(i) not in wrongs:
-            obj={"matrix":matrices[i].tolist(), "name":speakers[i]}
-            collection.insert_one(obj)
+
+
 
 
 
