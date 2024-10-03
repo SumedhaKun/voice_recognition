@@ -18,10 +18,6 @@ Person2: Now it's me talking. Hello world.
 Person1: Back to me. Bye.
 ```
 
-### 3. Correction:
-
-At this point, the program will ask for Y/N feedback on its assignment so that it can store voice clips for better future attribution. Answer carefully, and test again!
-
 #### Note:
 
 Results are not gauranteed to be accurate.
