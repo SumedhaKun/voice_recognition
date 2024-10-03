@@ -17,10 +17,9 @@ database = mongodb_client["VoiceRec"]
 collection = database["voices"]
 
 # records audio and stores in file 'test.wav'
-#record.record_audio("test")
-file="test2.wav"
-
-model = whisperx.load_model('base',device="cpu",compute_type='float32')
+file=record.record_audio("test")
+device="cuda"
+model = whisperx.load_model('base',device=device,compute_type='float32')
 TOKEN=os.getenv("MODEL_TOKEN")
 audio = whisperx.load_audio(file)
 
@@ -28,8 +27,8 @@ audio = whisperx.load_audio(file)
 result = model.transcribe(audio, batch_size=16)
 seg=result["segments"]
 
-model_a, metadata = whisperx.load_align_model(language_code=result["language"], device="cpu")
-result = whisperx.align(result["segments"], model_a, metadata, audio, "cpu", return_char_alignments=False)
+model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=device)
+result = whisperx.align(result["segments"], model_a, metadata, audio, device, return_char_alignments=False)
 
 
 diarize_model=Pipeline.from_pretrained('pyannote/speaker-diarization-3.1',use_auth_token=TOKEN)
