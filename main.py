@@ -8,7 +8,7 @@ from collections import Counter
 
 from dotenv import load_dotenv
 load_dotenv()
-import test
+import search
 from pymongo import MongoClient
 
 URI=os.getenv("MONGO_URL")
@@ -18,7 +18,7 @@ collection = database["voices"]
 
 # records audio and stores in file 'test.wav'
 file=record.record_audio("test")
-device="cuda"
+device="cpu"
 model = whisperx.load_model('base',device=device,compute_type='float32')
 TOKEN=os.getenv("MODEL_TOKEN")
 audio = whisperx.load_audio(file)
@@ -76,7 +76,7 @@ for i in range(len(new_files)):
     transcription=[]
     for j in range(len(new_files[i])):
         matrix=process.process_file(new_files[i][j])
-        speaker.append(test.search(matrix))
+        speaker.append(search.search(matrix))
         t=model.transcribe(whisperx.load_audio(new_files[i][j]))["segments"][0]["text"]
         transcription.append(t)
     counter=Counter(speaker)
