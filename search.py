@@ -36,7 +36,6 @@ def calculate_euclidean_distance(matrix1, matrix2):
     return distance
 
 def search(matrix):
-    # random forest
     df = pd.DataFrame(list(collection.find()))
 
     df["matrix"]=[np.array(l) for l in df["matrix"]]
