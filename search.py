@@ -9,10 +9,11 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn import svm
+import os
 from sklearn.neural_network import MLPClassifier
 LE = LabelEncoder()
 
-URI="mongodb+srv://kundurthisumedha:K2WQp4meOd8WFY5z@cluster0.pspbr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+URI=os.environ['MONGO_URI']
 mongodb_client = MongoClient(URI)
 database = mongodb_client["VoiceRec"]
 collection = database["voices"]
